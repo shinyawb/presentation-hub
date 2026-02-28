@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Presentation Hub</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    /* ── SETUP PAGE ─────────────────────────────────────────── */
+    #setup-page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 60px;
+      min-height: 100vh;
+    }
+
+    .setup-header { text-align: center; margin-bottom: 36px; }
+    .setup-header h1 { font-size: 2rem; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
+    .setup-header p { color: #666; font-size: 1rem; }
+
+    .setup-card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 680px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+
+    .field-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      color: #444;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .event-name-row { margin-bottom: 28px; }
+    .event-name-row input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .event-name-row input:focus { border-color: #4f46e5; }
+
+    /* Input mode toggle */
+    .mode-toggle {
+      display: flex;
+      background: #f0f0f8;
+      border-radius: 10px;
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 12px;
+      width: fit-content;
+    }
+    .mode-btn {
+      padding: 7px 18px;
+      border: none;
+      border-radius: 7px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #888;
+      background: transparent;
+      transition: all 0.15s;
+    }
+    .mode-btn.active {
+      background: white;
+      color: #4f46e5;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    .add-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 6px;
+      align-items: stretch;
+    }
+    .add-row input[type="text"],
+    .add-row input[type="url"] {
+      flex: 1;
+      padding: 11px 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .add-row input:focus { border-color: #4f46e5; }
+    .add-row input#new-name { flex: 0 0 160px; }
+
+    /* File input styling */
+    .file-input-wrap {
+      flex: 1;
+      position: relative;
+    }
+    .file-input-wrap input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+    .file-input-face {
+      border: 2px dashed #c0c0d8;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      color: #888;
+      background: #fafaff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      height: 100%;
+    }
+    .file-input-wrap:hover .file-input-face,
+    .file-input-wrap.has-file .file-input-face {
+      border-color: #4f46e5;
+      background: #f0f0ff;
+      color: #4f46e5;
+    }
+
+    .hint { font-size: 0.8rem; color: #999; margin-bottom: 16px; }
+
+    .btn {
+      padding: 11px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:hover { opacity: 0.88; }
+    .btn-primary { background: #4f46e5; color: white; }
+    .btn-green {
+      background: #10b981;
+      color: white;
+      width: 100%;
+      padding: 14px;
+      font-size: 1.05rem;
+      margin-top: 24px;
+      border-radius: 12px;
+    }
+    .btn-green:disabled { background: #ccc; cursor: default; opacity: 1; }
+
+    /* Presenter list */
+    .presenter-list { margin-top: 20px; border-top: 2px solid #f0f0f0; padding-top: 20px; }
+    .presenter-list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .presenter-list-header h3 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #999;
+    }
+    .drag-hint {
+      font-size: 0.75rem;
+      color: #bbb;
+    }
+
+    .presenter-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #f8f8ff;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      border: 1px solid #ebebf5;
+      cursor: default;
+      transition: box-shadow 0.15s, opacity 0.15s;
+      user-select: none;
+    }
+    .presenter-item.dragging { opacity: 0.4; }
+    .presenter-item.drag-over {
+      box-shadow: 0 0 0 2px #4f46e5;
+      background: #f0f0ff;
+    }
+
+    .drag-handle {
+      cursor: grab;
+      color: #ccc;
+      font-size: 1.1rem;
+      padding: 0 2px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .drag-handle:active { cursor: grabbing; }
+
+    .presenter-item .num {
+      background: #4f46e5;
+      color: white;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .presenter-item .info { flex: 1; min-width: 0; }
+    .presenter-item .p-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .presenter-item .p-link {
+      font-size: 0.78rem;
+      color: #888;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .tag {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .tag-slides { background: #e8f5e9; color: #2e7d32; }
+    .tag-canva  { background: #fff3e0; color: #e65100; }
+    .tag-pdf    { background: #e3f2fd; color: #1565c0; }
+    .tag-pptx   { background: #fce4ec; color: #880e4f; }
+    .tag-other  { background: #f3e5f5; color: #6a1b9a; }
+
+    /* Check status icons */
+    .check-status {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 1rem;
+      cursor: help;
+      position: relative;
+    }
+    .check-status .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #ddd;
+      border-top-color: #4f46e5;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Tooltip for check status */
+    .check-status[data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #1a1a2e;
+      color: white;
+      font-size: 0.75rem;
+      padding: 6px 10px;
+      border-radius: 7px;
+      white-space: nowrap;
+      max-width: 260px;
+      white-space: normal;
+      z-index: 100;
+      pointer-events: none;
+      line-height: 1.4;
+    }
+
+    .btn-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #ccc;
+      font-size: 1.1rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      transition: color 0.15s, background 0.15s;
+    }
+    .btn-remove:hover { color: #ef4444; background: #fef2f2; }
+
+    .empty-state { text-align: center; color: #bbb; padding: 20px 0; font-size: 0.95rem; }
+
+    /* Share row */
+    .share-section {
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: #f0f4ff;
+      border-radius: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .share-section input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid #d0d7ff;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.82rem;
+      color: #555;
+      background: white;
+      outline: none;
+    }
+    .btn-copy {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+    .btn-copy:hover { opacity: 0.85; }
+    .share-note {
+      width: 100%;
+      font-size: 0.75rem;
+      color: #e65100;
+    }
+
+    /* ── PRESENTATION PAGE ─────────────────────────────────── */
+    #present-page {
+      display: none;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    .present-topbar {
+      background: #1a1a2e;
+      color: white;
+      padding: 0 20px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      gap: 16px;
+    }
+    .present-topbar h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .topbar-nav { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .topbar-nav .counter { font-size: 0.85rem; color: #aaa; padding: 0 8px; }
+    .btn-nav {
+      background: rgba(255,255,255,0.12);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-nav:hover { background: rgba(255,255,255,0.22); }
+    .btn-nav:disabled { opacity: 0.3; cursor: default; }
+    .btn-setup {
+      background: rgba(255,255,255,0.08);
+      color: #ccc;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-setup:hover { background: rgba(255,255,255,0.15); }
+
+    .present-body { display: flex; flex: 1; overflow: hidden; }
+
+    .sidebar {
+      width: 220px;
+      background: #1e1e35;
+      overflow-y: auto;
+      flex-shrink: 0;
+      padding: 12px 0;
+    }
+    .sidebar-title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #666;
+      padding: 0 16px 10px;
+      font-weight: 700;
+    }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, border-color 0.15s;
+      color: #aaa;
+    }
+    .sidebar-item:hover { background: rgba(255,255,255,0.06); color: #ddd; }
+    .sidebar-item.active {
+      background: rgba(79,70,229,0.2);
+      border-left-color: #4f46e5;
+      color: white;
+    }
+    .sidebar-item .s-num {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #555;
+      flex-shrink: 0;
+      width: 18px;
+      text-align: right;
+    }
+    .sidebar-item.active .s-num { color: #a5b4fc; }
+    .sidebar-item .s-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .frame-area { flex: 1; display: flex; flex-direction: column; background: #111; overflow: hidden; }
+    .frame-bar {
+      background: #252535;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      gap: 12px;
+    }
+    .frame-bar .presenter-title { color: white; font-size: 0.95rem; font-weight: 600; }
+    .frame-bar .open-btn {
+      background: rgba(255,255,255,0.1);
+      color: #ccc;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 7px;
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+      text-decoration: none;
+    }
+    .frame-bar .open-btn:hover { background: rgba(255,255,255,0.2); }
+
+    .iframe-wrapper { flex: 1; position: relative; }
+    .iframe-wrapper iframe { width: 100%; height: 100%; border: none; display: block; }
+
+    /* Overlay messages */
+    .frame-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: #1a1a2e;
+      color: white;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      text-align: center;
+      padding: 40px;
+    }
+    .frame-overlay.visible { display: flex; }
+    .frame-overlay h3 { font-size: 1.3rem; }
+    .frame-overlay p { color: #aaa; max-width: 420px; line-height: 1.6; }
+    .frame-overlay a, .frame-overlay button.overlay-btn {
+      background: #4f46e5;
+      color: white;
+      text-decoration: none;
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: opacity 0.15s;
+      border: none;
+      cursor: pointer;
+    }
+    .frame-overlay a:hover, .frame-overlay button.overlay-btn:hover { opacity: 0.85; }
+    .frame-overlay .sub-link {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #aaa;
+      font-size: 0.85rem;
+      padding: 9px 20px;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1a1a2e;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 600px) {
+      .sidebar { width: 160px; }
+      .setup-card { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     SETUP PAGE
+════════════════════════════════════════ -->
+<div id="setup-page">
+  <div class="setup-header">
+    <h1>Presentation Hub</h1>
+    <p>Collect all student links, then present them seamlessly in one place.</p>
+  </div>
+
+  <div class="setup-card">
+
+    <!-- Event name -->
+    <div class="event-name-row">
+      <label class="field-label">Event / Class Name</label>
+      <input type="text" id="event-name" placeholder="e.g. Grade 10 Science Presentations" />
+    </div>
+
+    <!-- Add presenter section -->
+    <div class="add-section">
+      <label class="field-label">Add Presenter</label>
+
+      <!-- Mode toggle: Link vs File -->
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="mode-link-btn" onclick="setInputMode('link')">🔗 Online Link</button>
+        <button class="mode-btn" id="mode-file-btn" onclick="setInputMode('file')">📎 Upload File</button>
+      </div>
+
+      <!-- Link mode -->
+      <div id="link-mode">
+        <div class="add-row">
+          <input type="text" id="new-name" placeholder="Student name" />
+          <input type="url" id="new-link" placeholder="Paste Google Slides, Canva, or other link…" />
+          <button class="btn btn-primary" onclick="addPresenter()">Add</button>
+        </div>
+        <p class="hint">Supports Google Slides, Canva, Prezi, Slides.com, and most online presentations.</p>
+      </div>
+
+      <!-- File mode -->
+      <div id="file-mode" style="display:none">
+        <div class="add-row">
+          <input type="text" id="new-name-file" placeholder="Student name" />
+          <div class="file-input-wrap" id="file-wrap">
+            <input type="file" id="new-file" accept=".pdf,.ppt,.pptx" onchange="onFileSelected()" />
+            <div class="file-input-face" id="file-face">
+              <span>📂</span>
+              <span id="file-face-text">Choose PDF or PPTX…</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="addPresenterFile()">Add</button>
+        </div>
+        <p class="hint">PDF files display inline. PPTX/PPT files will be listed with a download option (browsers can't render .pptx natively).</p>
+      </div>
+    </div>
+
+    <!-- Presenter list -->
+    <div class="presenter-list" id="presenter-list">
+      <div class="presenter-list-header">
+        <h3>Presenters <span id="count-badge"></span></h3>
+        <span class="drag-hint" id="drag-hint" style="display:none">Drag ☰ to reorder</span>
+      </div>
+      <div id="presenter-items">
+        <div class="empty-state">No presenters added yet.</div>
+      </div>
+    </div>
+
+    <!-- Share URL -->
+    <div class="share-section" id="share-section" style="display:none">
+      <input type="text" id="share-url" readonly />
+      <button class="btn-copy" onclick="copyShareUrl()">Copy Link</button>
+      <span class="share-note" id="share-note" style="display:none">
+        ⚠️ File uploads are not included in the share link (only online links can be shared).
+      </span>
+    </div>
+
+    <!-- Start button -->
+    <button class="btn btn-green" onclick="startPresentation()" id="start-btn" disabled>
+      Start Presentation
+    </button>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PRESENTATION PAGE
+════════════════════════════════════════ -->
+<div id="present-page">
+
+  <div class="present-topbar">
+    <h2 id="topbar-title">Presentation Hub</h2>
+    <div class="topbar-nav">
+      <button class="btn-nav" id="btn-prev" onclick="navigate(-1)">&#8592; Prev</button>
+      <span class="counter" id="nav-counter">1 / 1</span>
+      <button class="btn-nav" id="btn-next" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    <button class="btn-setup" onclick="goToSetup()">&#9998; Edit List</button>
+  </div>
+
+  <div class="present-body">
+    <div class="sidebar" id="sidebar"></div>
+    <div class="frame-area">
+      <div class="frame-bar">
+        <span class="presenter-title" id="frame-presenter-name"></span>
+        <a class="open-btn" id="open-original" href="#" target="_blank" rel="noopener">
+          &#8599; Open Original
+        </a>
+      </div>
+      <div class="iframe-wrapper">
+        <iframe id="main-frame" src="about:blank" allowfullscreen></iframe>
+
+        <!-- Shown when site blocks embedding -->
+        <div class="frame-overlay" id="overlay-blocked">
+          <h3>Cannot embed this link</h3>
+          <p>This website doesn't allow embedding. You can open it in a new tab instead.</p>
+          <a id="blocked-open-link" href="#" target="_blank" rel="noopener">Open in New Tab</a>
+        </div>
+
+        <!-- Shown for PPTX files -->
+        <div class="frame-overlay" id="overlay-pptx">
+          <h3>📊 PowerPoint File</h3>
+          <p>
+            Browsers can't display .pptx files directly.
+            You can download and open it, or for best results, upload it to
+            <strong>Google Slides</strong> and use that link instead.
+          </p>
+          <a id="pptx-download-link" href="#" download>Download File</a>
+          <a class="sub-link" href="https://slides.google.com" target="_blank" rel="noopener">Open Google Slides ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // ─── State ────────────────────────────────────────────────
+  let presenters = [];
+  // Each presenter: {
+  //   name, type ('url'|'file'),
+  //   url,                        // for type=url
+  //   fileName, blobUrl, fileType // for type=file ('pdf'|'pptx')
+  //   checkStatus: 'pending'|'checking'|'ok'|'warn'|'error'
+  //   checkMessage: string
+  // }
+  let currentIndex = 0;
+  let inputMode = 'link';
+  let dragSrcIndex = null;
+
+  // ─── On Load ──────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      try {
+        const data = JSON.parse(atob(decodeURIComponent(hash)));
+        if (data.presenters && data.presenters.length > 0) {
+          document.getElementById('event-name').value = data.eventName || '';
+          presenters = data.presenters.map(p => ({
+            ...p,
+            checkStatus: 'pending',
+            checkMessage: ''
+          }));
+          renderPresenterList();
+          presenters.forEach((_, i) => checkUrlStatus(i));
+          if (data.autoStart) { startPresentation(); return; }
+        }
+      } catch {}
+    }
+  });
+
+  // ─── Input mode toggle ────────────────────────────────────
+  function setInputMode(mode) {
+    inputMode = mode;
+    document.getElementById('link-mode').style.display = mode === 'link' ? 'block' : 'none';
+    document.getElementById('file-mode').style.display = mode === 'file' ? 'block' : 'none';
+    document.getElementById('mode-link-btn').classList.toggle('active', mode === 'link');
+    document.getElementById('mode-file-btn').classList.toggle('active', mode === 'file');
+  }
+
+  function onFileSelected() {
+    const file = document.getElementById('new-file').files[0];
+    const wrap = document.getElementById('file-wrap');
+    const face = document.getElementById('file-face-text');
+    if (file) {
+      wrap.classList.add('has-file');
+      face.textContent = file.name;
+    } else {
+      wrap.classList.remove('has-file');
+      face.textContent = 'Choose PDF or PPTX…';
+    }
+  }
+
+  // ─── URL helpers ──────────────────────────────────────────
+  function getEmbedUrl(presenter) {
+    if (presenter.type === 'file') return presenter.blobUrl;
+    return convertToEmbedUrl(presenter.url);
+  }
+
+  function convertToEmbedUrl(url) {
+    try {
+      const u = new URL(url);
+      if (u.hostname.includes('docs.google.com') && u.pathname.includes('/presentation/')) {
+        const m = u.pathname.match(/\/presentation\/d\/([^/]+)/);
+        if (m) return `https://docs.google.com/presentation/d/${m[1]}/embed?start=false&loop=false&delayms=0`;
+      }
+      if (u.hostname.includes('canva.com')) {
+        return url.split('?')[0].split('#')[0] + '?embed';
+      }
+      if (u.hostname.includes('slides.com')) {
+        return `https://slides.com${u.pathname.replace(/\/$/, '')}/embed`;
+      }
+      return url;
+    } catch { return url; }
+  }
+
+  function detectPlatform(url) {
+    try {
+      const h = new URL(url).hostname;
+      if (h.includes('docs.google.com')) return 'Google Slides';
+      if (h.includes('canva.com'))        return 'Canva';
+      if (h.includes('prezi.com'))        return 'Prezi';
+      if (h.includes('slides.com'))       return 'Slides.com';
+      return 'Link';
+    } catch { return 'Link'; }
+  }
+
+  function typeTag(presenter) {
+    if (presenter.type === 'file') {
+      const cls = presenter.fileType === 'pdf' ? 'tag-pdf' : 'tag-pptx';
+      const lbl = presenter.fileType === 'pdf' ? 'PDF' : 'PPTX';
+      return `<span class="tag ${cls}">${lbl}</span>`;
+    }
+    const t = detectPlatform(presenter.url);
+    const cls = t === 'Google Slides' ? 'tag-slides'
+               : t === 'Canva'        ? 'tag-canva'
+               : 'tag-other';
+    return `<span class="tag ${cls}">${t}</span>`;
+  }
+
+  function checkStatusIcon(presenter) {
+    if (presenter.type === 'file') return ''; // files don't need a check
+    const s = presenter.checkStatus;
+    const msg = escapeHtml(presenter.checkMessage || '');
+    if (s === 'checking') return `<div class="check-status"><div class="spinner"></div></div>`;
+    if (s === 'ok')   return `<div class="check-status" data-tip="${msg}" title="${msg}">✅</div>`;
+    if (s === 'warn') return `<div class="check-status" data-tip="${msg}" title="${msg}">⚠️</div>`;
+    if (s === 'error')return `<div class="check-status" data-tip="${msg}" title="${msg}">❌</div>`;
+    return '';
+  }
+
+  // ─── Permission / accessibility check ────────────────────
+  async function checkUrlStatus(index) {
+    const p = presenters[index];
+    if (!p || p.type === 'file') return;
+
+    p.checkStatus = 'checking';
+    p.checkMessage = 'Checking…';
+    renderPresenterList();
+
+    const url = p.url;
+    let platformWarning = null;
+
+    try {
+      const u = new URL(url);
+
+      // Google Slides: check for edit link without sharing param
+      if (u.hostname.includes('docs.google.com') && u.pathname.includes('/presentation/')) {
+        if (u.pathname.includes('/edit') && !u.searchParams.has('usp')) {
+          platformWarning = 'This looks like a personal edit link. In Google Slides, click "Share" → set to "Anyone with the link can view" and paste that link instead.';
+        }
+      }
+
+      // Canva: edit link is not public
+      if (u.hostname.includes('canva.com') && u.pathname.includes('/edit')) {
+        platformWarning = 'This looks like a Canva edit link. In Canva, click "Share" → "Copy link" to get a public view link.';
+      }
+    } catch {
+      p.checkStatus = 'error';
+      p.checkMessage = 'This doesn\'t look like a valid URL.';
+      renderPresenterList();
+      return;
+    }
+
+    if (platformWarning) {
+      p.checkStatus = 'warn';
+      p.checkMessage = platformWarning;
+      renderPresenterList();
+      return;
+    }
+
+    // Reachability check
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 7000);
+      await fetch(url, { mode: 'no-cors', cache: 'no-store', signal: controller.signal });
+      clearTimeout(timeout);
+      p.checkStatus = 'ok';
+      p.checkMessage = 'Link is reachable.';
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        p.checkStatus = 'warn';
+        p.checkMessage = 'Link check timed out — it may still work. Verify it\'s publicly accessible.';
+      } else {
+        p.checkStatus = 'warn';
+        p.checkMessage = 'Could not verify this link. Make sure it\'s publicly accessible and not behind a login.';
+      }
+    }
+    renderPresenterList();
+  }
+
+  // ─── Add presenter (link) ─────────────────────────────────
+  function addPresenter() {
+    const nameEl = document.getElementById('new-name');
+    const linkEl = document.getElementById('new-link');
+    const name = nameEl.value.trim();
+    const url  = linkEl.value.trim();
+
+    if (!name) { toast('Please enter a name.'); nameEl.focus(); return; }
+    if (!url)  { toast('Please paste a link.'); linkEl.focus(); return; }
+    try { new URL(url); } catch {
+      toast('That doesn\'t look like a valid link. Make sure it starts with https://');
+      linkEl.focus(); return;
+    }
+
+    presenters.push({ name, url, type: 'url', checkStatus: 'pending', checkMessage: '' });
+    const idx = presenters.length - 1;
+    nameEl.value = '';
+    linkEl.value = '';
+    nameEl.focus();
+    renderPresenterList();
+    checkUrlStatus(idx);
+  }
+
+  // ─── Add presenter (file) ─────────────────────────────────
+  function addPresenterFile() {
+    const nameEl = document.getElementById('new-name-file');
+    const fileEl = document.getElementById('new-file');
+    const name = nameEl.value.trim();
+    const file = fileEl.files[0];
+
+    if (!name) { toast('Please enter a name.'); nameEl.focus(); return; }
+    if (!file) { toast('Please choose a file.'); return; }
+
+    const ext = file.name.split('.').pop().toLowerCase();
+    const fileType = ext === 'pdf' ? 'pdf' : 'pptx';
+    const blobUrl = URL.createObjectURL(file);
+
+    presenters.push({
+      name,
+      type: 'file',
+      fileName: file.name,
+      blobUrl,
+      fileType,
+      checkStatus: 'ok',
+      checkMessage: 'File uploaded'
+    });
+
+    nameEl.value = '';
+    fileEl.value = '';
+    document.getElementById('file-wrap').classList.remove('has-file');
+    document.getElementById('file-face-text').textContent = 'Choose PDF or PPTX…';
+    nameEl.focus();
+    renderPresenterList();
+  }
+
+  function removePresenter(index) {
+    // Revoke blob URL to free memory
+    if (presenters[index].blobUrl) URL.revokeObjectURL(presenters[index].blobUrl);
+    presenters.splice(index, 1);
+    renderPresenterList();
+  }
+
+  // ─── Render presenter list ────────────────────────────────
+  function renderPresenterList() {
+    const container = document.getElementById('presenter-items');
+    const badge      = document.getElementById('count-badge');
+    const startBtn   = document.getElementById('start-btn');
+    const shareSection = document.getElementById('share-section');
+    const dragHint   = document.getElementById('drag-hint');
+
+    badge.textContent = presenters.length ? `(${presenters.length})` : '';
+    startBtn.disabled = presenters.length === 0;
+    dragHint.style.display = presenters.length > 1 ? 'block' : 'none';
+
+    if (presenters.length === 0) {
+      container.innerHTML = '<div class="empty-state">No presenters added yet.</div>';
+      shareSection.style.display = 'none';
+      return;
+    }
+
+    container.innerHTML = presenters.map((p, i) => {
+      const subtext = p.type === 'file' ? p.fileName : p.url;
+      return `
+        <div class="presenter-item" draggable="true" data-index="${i}">
+          <span class="drag-handle" title="Drag to reorder">☰</span>
+          <div class="num">${i + 1}</div>
+          <div class="info">
+            <div class="p-name">${escapeHtml(p.name)}</div>
+            <div class="p-link">${escapeHtml(subtext)}</div>
+          </div>
+          <div class="item-right">
+            ${typeTag(p)}
+            ${checkStatusIcon(p)}
+            <button class="btn-remove" onclick="removePresenter(${i})" title="Remove">&#10005;</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    setupDragAndDrop();
+    updateShareUrl();
+  }
+
+  // ─── Drag & drop reordering ───────────────────────────────
+  function setupDragAndDrop() {
+    const items = document.querySelectorAll('#presenter-items .presenter-item');
+    items.forEach((item) => {
+      item.addEventListener('dragstart', (e) => {
+        dragSrcIndex = parseInt(item.dataset.index);
+        item.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', dragSrcIndex);
+      });
+      item.addEventListener('dragend', () => {
+        item.classList.remove('dragging');
+        items.forEach(el => el.classList.remove('drag-over'));
+      });
+      item.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        items.forEach(el => el.classList.remove('drag-over'));
+        item.classList.add('drag-over');
+      });
+      item.addEventListener('dragleave', () => {
+        item.classList.remove('drag-over');
+      });
+      item.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const targetIndex = parseInt(item.dataset.index);
+        if (dragSrcIndex !== null && dragSrcIndex !== targetIndex) {
+          const moved = presenters.splice(dragSrcIndex, 1)[0];
+          presenters.splice(targetIndex, 0, moved);
+          renderPresenterList();
+        }
+        dragSrcIndex = null;
+      });
+    });
+  }
+
+  // ─── Share URL ────────────────────────────────────────────
+  function updateShareUrl() {
+    const shareSection = document.getElementById('share-section');
+    const shareNote    = document.getElementById('share-note');
+    shareSection.style.display = 'flex';
+
+    const hasFiles = presenters.some(p => p.type === 'file');
+    shareNote.style.display = hasFiles ? 'block' : 'none';
+
+    document.getElementById('share-url').value = buildShareUrl();
+  }
+
+  function buildShareUrl(autoStart = false) {
+    const urlOnlyPresenters = presenters.filter(p => p.type === 'url');
+    const data = {
+      eventName: document.getElementById('event-name').value.trim(),
+      presenters: urlOnlyPresenters.map(({ name, url, type }) => ({ name, url, type })),
+      autoStart
+    };
+    const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(data)))));
+    return window.location.origin + window.location.pathname + '#' + encoded;
+  }
+
+  function copyShareUrl() {
+    const url = buildShareUrl();
+    navigator.clipboard.writeText(url)
+      .then(() => toast('Link copied!'))
+      .catch(() => {
+        document.getElementById('share-url').select();
+        document.execCommand('copy');
+        toast('Link copied!');
+      });
+  }
+
+  // ─── Keyboard shortcuts (setup page) ─────────────────────
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const active = document.activeElement?.id;
+      if (active === 'new-name' || active === 'new-link') addPresenter();
+      if (active === 'new-name-file') addPresenterFile();
+    }
+  });
+
+  // ─── Presentation mode ────────────────────────────────────
+  function startPresentation() {
+    if (presenters.length === 0) return;
+    currentIndex = 0;
+    document.getElementById('setup-page').style.display = 'none';
+    document.getElementById('present-page').style.display = 'flex';
+    const eventName = document.getElementById('event-name').value.trim() || 'Presentation Hub';
+    document.getElementById('topbar-title').textContent = eventName;
+    renderSidebar();
+    loadPresenter(currentIndex);
+  }
+
+  function renderSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.innerHTML = '<div class="sidebar-title">Presenters</div>' +
+      presenters.map((p, i) => `
+        <div class="sidebar-item ${i === currentIndex ? 'active' : ''}" onclick="goToPresenter(${i})">
+          <span class="s-num">${i + 1}</span>
+          <span class="s-name">${escapeHtml(p.name)}</span>
+        </div>
+      `).join('');
+  }
+
+  function loadPresenter(index) {
+    const p = presenters[index];
+    const frame        = document.getElementById('main-frame');
+    const overlayBlock = document.getElementById('overlay-blocked');
+    const overlayPptx  = document.getElementById('overlay-pptx');
+    const openBtn      = document.getElementById('open-original');
+    const blockedLink  = document.getElementById('blocked-open-link');
+    const pptxLink     = document.getElementById('pptx-download-link');
+    const nameEl       = document.getElementById('frame-presenter-name');
+
+    // Reset overlays
+    overlayBlock.classList.remove('visible');
+    overlayPptx.classList.remove('visible');
+    frame.src = 'about:blank';
+    nameEl.textContent = p.name;
+
+    if (p.type === 'file') {
+      if (p.fileType === 'pptx') {
+        // Can't embed PPTX natively
+        openBtn.href = p.blobUrl;
+        openBtn.setAttribute('download', p.fileName);
+        pptxLink.href = p.blobUrl;
+        pptxLink.setAttribute('download', p.fileName);
+        overlayPptx.classList.add('visible');
+      } else {
+        // PDF — browsers render natively
+        openBtn.href = p.blobUrl;
+        openBtn.removeAttribute('download');
+        frame.src = p.blobUrl;
+      }
+    } else {
+      const embedUrl = convertToEmbedUrl(p.url);
+      openBtn.href = p.url;
+      openBtn.removeAttribute('download');
+      blockedLink.href = p.url;
+      frame.src = embedUrl;
+    }
+
+    updateNav();
+  }
+
+  function goToPresenter(index) {
+    currentIndex = index;
+    loadPresenter(index);
+    renderSidebar();
+  }
+
+  function navigate(dir) {
+    const next = currentIndex + dir;
+    if (next < 0 || next >= presenters.length) return;
+    goToPresenter(next);
+  }
+
+  function updateNav() {
+    document.getElementById('btn-prev').disabled = currentIndex === 0;
+    document.getElementById('btn-next').disabled = currentIndex === presenters.length - 1;
+    document.getElementById('nav-counter').textContent = `${currentIndex + 1} / ${presenters.length}`;
+  }
+
+  function goToSetup() {
+    document.getElementById('present-page').style.display = 'none';
+    document.getElementById('setup-page').style.display = 'flex';
+    if (presenters.length > 0) updateShareUrl();
+  }
+
+  // Keyboard navigation in presentation mode
+  document.addEventListener('keydown', (e) => {
+    if (document.getElementById('present-page').style.display === 'flex') {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   navigate(-1);
+    }
+  });
+
+  // ─── Utils ────────────────────────────────────────────────
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), 2500);
+  }
+</script>
+</body>
+</html>
